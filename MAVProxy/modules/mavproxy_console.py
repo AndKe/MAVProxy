@@ -2,6 +2,9 @@
   MAVProxy console
 
   uses lib/console.py for display
+  TODO:
+add orange warning for HDOP/sats '''
+
 """
 
 import os, sys, math, time, re
@@ -38,6 +41,7 @@ class ConsoleModule(mp_module.MPModule):
         self.unload_check_interval = 5 # seconds
         self.last_unload_check_time = time.time()
         self.add_command('console', self.cmd_console, "console module", ['add','list','remove'])
+        self.flaps_chan = 0 #values: 0=not detected yet, 5..14=flaps channel, 50=none found
         mpstate.console = wxconsole.MessageConsole(title='Console')
 
         # setup some default status information
@@ -69,10 +73,14 @@ class ConsoleModule(mp_module.MPModule):
         mpstate.console.set_status('WPBearing', 'Bearing ---', row=3)
         mpstate.console.set_status('AltError', 'AltError --', row=3)
         mpstate.console.set_status('AspdError', 'AspdError --', row=3)
+        mpstate.console.set_status('XtrackError', 'XtrackError --', row=3)
         mpstate.console.set_status('FlightTime', 'FlightTime --', row=3)
         mpstate.console.set_status('ETR', 'ETR --', row=3)
         mpstate.console.set_status('Params', 'Param ---/---', row=3)
         mpstate.console.set_status('Mission', 'Mission --/--', row=3)
+        mpstate.console.set_status('Flaps', 'Flaps --', row=4)
+        mpstate.console.set_status('Photos', 'Photos --', row=4)
+
 
         self.vehicle_list = []
         self.vehicle_menu = None
@@ -267,13 +275,13 @@ class ConsoleModule(mp_module.MPModule):
             return
         type = msg.get_type()
         sysid = msg.get_srcSystem()
-        compid = msg.get_srcComponent()
 
         if type == 'HEARTBEAT' or type == 'HIGH_LATENCY2':
             if not sysid in self.vehicle_list:
                 self.add_new_vehicle(msg)
             if sysid not in self.component_name:
                 self.component_name[sysid] = {}
+            compid = msg.get_srcComponent()
             if compid not in self.component_name[sysid]:
                 self.component_name[sysid][compid] = self.component_type_string(msg)
                 self.update_vehicle_menu()
@@ -396,6 +404,7 @@ class ConsoleModule(mp_module.MPModule):
                         'PRX'  : mavutil.mavlink.MAV_SYS_STATUS_SENSOR_PROXIMITY,
                         'PRE'  : mavutil.mavlink.MAV_SYS_STATUS_PREARM_CHECK,
             }
+            announce = [ 'RC' ]
             hide_if_not_present = set(['PRE', 'PRX'])
             for s in sensors.keys():
                 bits = sensors[s]
@@ -446,6 +455,33 @@ class ConsoleModule(mp_module.MPModule):
 
         elif type == 'WIND':
             self.console.set_status('Wind', 'Wind %u/%s' % (msg.direction, self.speed_string(msg.speed)))
+
+        elif type == 'SERVO_OUTPUT_RAW':
+            # if no flaps channel defined, and not given up, and parameters are fetched
+            if self.flaps_chan == 0 and self.get_mav_param('RC12_FUNCTION',50) != 50 :
+                for num in range(5,14):
+                    if  self.get_mav_param('RC%u_FUNCTION' % num ,0) == 2 or self.get_mav_param('RC%u_FUNCTION' % num ,0) == 3 :
+                        self.flaps_chan = num
+                        self.console.writeln("Flaps found on channel %u" % num)
+                        break
+                if self.flaps_chan == 0 :
+                    self.console.writeln("Flaps not found")
+                    self.flaps_chan = 50
+            else:
+                if self.flaps_chan != 50 :   #if we did not gave up:
+                    self.maxflaps = self.get_mav_param('RC%u_MAX' % self.flaps_chan ,0)
+                    self.minflaps = self.get_mav_param('RC%u_MIN' % self.flaps_chan ,0)
+                    self.flaps_pct = (msg.servo6_raw - self.minflaps)/((self.maxflaps - self.minflaps)/100)
+                    if self.flaps_pct > 50 :
+                        fg = "red"
+                    elif self.flaps_pct > 1 :
+                        fg = "orange"
+                    else:
+                        fg = "black"
+                    self.console.set_status('Flaps', 'Flaps %.0f%%' % (self.flaps_pct), fg=fg)
+
+        elif type == 'CAMERA_FEEDBACK':
+            self.console.set_status('Photos', 'Photos %u' % (msg.img_idx))
 
         elif type == 'EKF_STATUS_REPORT':
             highest = 0.0
@@ -598,8 +634,17 @@ class ConsoleModule(mp_module.MPModule):
                 alt_error = "NaN"
             else:
                 alt_error = "%s%s" % (self.height_string(msg.alt_error), alt_error_sign)
-            self.console.set_status('AltError', 'AltError %s' % alt_error)
+                    if msg.alt_error > 2 or msg.alt_error < -2 :
+                        fg = "red"
+                    elif msg.alt_error > 1 or msg.alt_error < -1:
+                        fg = "darkorange"
+                    else:
+                        fg = "black"
+
+            self.console.set_status('AltError', 'AltError %s' % alt_error, fg=fg)
             self.console.set_status('AspdError', 'AspdError %s%s' % (self.speed_string(msg.aspd_error*0.01), aspd_error_sign))
+            #self.console.set_status('AspdError', 'AspdError %.1f%s' % (msg.aspd_error*0.01, aspd_error_sign))
+            self.console.set_status('XtrackError', 'XtrackError %d' % (msg.xtrack_error))
 
         elif type == 'PARAM_VALUE':
             rec, tot = self.module('param').param_status()
