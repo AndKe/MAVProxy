@@ -372,7 +372,7 @@ class ConsoleModule(mp_module.MPModule):
             self.console.set_status('Alt', 'Alt %s' % self.height_string(rel_alt))
             self.console.set_status('AirSpeed', 'AirSpeed %s' % self.speed_string(msg.airspeed))
             self.console.set_status('GPSSpeed', 'GPSSpeed %s' % self.speed_string(msg.groundspeed))
-            self.console.set_status('Thr', 'Thr %u' % msg.throttle)
+            self.console.set_status('Thr', 'Thr %u%%' % msg.throttle)
             t = time.localtime(msg._timestamp)
             flying = False
             if self.mpstate.vehicle_type == 'copter':
