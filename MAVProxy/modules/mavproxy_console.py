@@ -41,6 +41,7 @@ class ConsoleModule(mp_module.MPModule):
         self.last_unload_check_time = time.time()
         self.add_command('console', self.cmd_console, "console module", ['add','list','remove'])
         self.flaps_chan = 0 #values: 0=not detected yet, 5..14=flaps channel, 50=none found
+        self.flaps_new = False # old parameter was RCx_ new is SERVOx
         mpstate.console = wxconsole.MessageConsole(title='Console')
 
         # setup some default status information
@@ -506,11 +507,16 @@ class ConsoleModule(mp_module.MPModule):
             self.console.set_status('Wind', 'Wind %u/%s' % (msg.direction, self.speed_string(msg.speed)))
 
         elif type == 'SERVO_OUTPUT_RAW':
-            # if no flaps channel defined, and not given up, and parameters are fetched
-            if self.flaps_chan == 0 and self.get_mav_param('RC12_FUNCTION',50) != 50 :
+            # if no flaps channel defined look for it,  and parameters are fetched
+            if self.flaps_chan == 0 and (self.get_mav_param('RC12_FUNCTION',50) != 50 or self.get_mav_param('SERVO12_FUNCTION',50) != 50):
                 for num in range(5,14):
                     if  self.get_mav_param('RC%u_FUNCTION' % num ,0) == 2 or self.get_mav_param('RC%u_FUNCTION' % num ,0) == 3 :
                         self.flaps_chan = num
+                        self.console.writeln("Flaps found on channel %u" % num)
+                        break
+                    if  self.get_mav_param('SERVO%u_FUNCTION' % num ,0) == 2 or self.get_mav_param('SERVO%u_FUNCTION' % num ,0) == 3 :
+                        self.flaps_chan = num
+                        self.flaps_new = True
                         self.console.writeln("Flaps found on channel %u" % num)
                         break
                 if self.flaps_chan == 0 :
@@ -518,8 +524,12 @@ class ConsoleModule(mp_module.MPModule):
                     self.flaps_chan = 50
             else:
                 if self.flaps_chan != 50 :   #if we did not gave up:
-                    self.maxflaps = self.get_mav_param('RC%u_MAX' % self.flaps_chan ,0)
-                    self.minflaps = self.get_mav_param('RC%u_MIN' % self.flaps_chan ,0)
+                    if self.flaps_new == False:
+                        self.maxflaps = self.get_mav_param('RC%u_MAX' % self.flaps_chan ,0)
+                        self.minflaps = self.get_mav_param('RC%u_MIN' % self.flaps_chan ,0)
+                    else:
+                        self.maxflaps = self.get_mav_param('SERVO%u_MAX' % self.flaps_chan ,0)
+                        self.minflaps = self.get_mav_param('SERVO%u_MIN' % self.flaps_chan ,0)
                     self.flaps_pct = (msg.servo6_raw - self.minflaps)/((self.maxflaps - self.minflaps)/100)
                     if self.flaps_pct > 50 :
                         fg = "red"
