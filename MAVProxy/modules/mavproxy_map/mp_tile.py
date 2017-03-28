@@ -616,8 +616,8 @@ if __name__ == "__main__":
 
     from optparse import OptionParser
     parser = OptionParser("mp_tile.py [options]")
-    parser.add_option("--lat", type='float', default=-35.362938, help="start latitude")
-    parser.add_option("--lon", type='float', default=149.165085, help="start longitude")
+    parser.add_option("--lat", type='float', default=69.673, help="start latitude")
+    parser.add_option("--lon", type='float', default=18.946, help="start longitude")
     parser.add_option("--width", type='float', default=1000.0, help="width in meters")
     parser.add_option("--service", default="MicrosoftSat", help="tile service")
     parser.add_option("--zoom", default=None, type='int', help="zoom level")
