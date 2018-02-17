@@ -81,6 +81,12 @@ class ConsoleModule(mp_module.MPModule):
         mpstate.console.set_status('Mission', 'Mission --/--', row=3)
         mpstate.console.set_status('Flaps', 'Flaps --', row=4)
         mpstate.console.set_status('Photos', 'Photos --', row=4)
+        mpstate.console.set_status('Clip0', 'Clip0 --', row=4)
+        mpstate.console.set_status('Clip1', 'Clip1 --', row=4)
+        mpstate.console.set_status('Clip2', 'Clip2 --', row=4)
+        mpstate.console.set_status('VibX', 'VibX --', row=4)
+        mpstate.console.set_status('VibY', 'VibY --', row=4)
+        mpstate.console.set_status('VibZ', 'VibZ --', row=4)
 
 
         self.vehicle_list = []
@@ -655,6 +661,55 @@ class ConsoleModule(mp_module.MPModule):
             self.console.set_status('AspdError', 'AspdError %s%s' % (self.speed_string(msg.aspd_error*0.01), aspd_error_sign))
             #self.console.set_status('AspdError', 'AspdError %.1f%s' % (msg.aspd_error*0.01, aspd_error_sign))
             self.console.set_status('XtrackError', 'XtrackError %d' % (msg.xtrack_error))
+        elif type == 'VIBRATION':
+            if msg.clipping_0 >= 20:
+                fg = 'red'
+            elif msg.clipping_0 >= 10:
+                fg = 'darkorange'
+            else:
+                fg = "black"
+            self.console.set_status('Clip0', 'Clip0 %s' % msg.clipping_0, fg=fg)
+
+            if msg.clipping_1 >= 20:
+                fg = 'red'
+            elif msg.clipping_1 >= 10:
+                fg = 'darkorange'
+            else:
+                fg = "black"
+            self.console.set_status('Clip1', 'Clip1 %s' % msg.clipping_1, fg=fg)
+
+            if msg.clipping_2 >= 20:
+                fg = 'red'
+            elif msg.clipping_2 >= 10:
+                fg = 'darkorange'
+            else:
+                fg = "black"
+            self.console.set_status('Clip2', 'Clip2 %s' % msg.clipping_2, fg=fg)
+
+            if msg.vibration_x >= 60:
+                fg = 'red'
+            elif msg.vibration_x >= 30:
+                fg = 'darkorange'
+            else:
+                fg = "black"
+            self.console.set_status('VibX', 'VibX %.2f' % msg.vibration_x, fg=fg)
+
+            if msg.vibration_y >= 60:
+                fg = 'red'
+            elif msg.vibration_y >= 30:
+                fg = 'darkorange'
+            else:
+                fg = "black"
+            self.console.set_status('VibY', 'VibY %.2f' % msg.vibration_y, fg=fg)
+
+            if msg.vibration_z >= 60:
+                fg = 'red'
+            elif msg.vibration_z >= 30:
+                fg = 'darkorange'
+            else:
+                fg = "black"
+            self.console.set_status('VibZ', 'VibZ %.2f' % msg.vibration_z, fg=fg)
+
 
         elif type == 'PARAM_VALUE':
             rec, tot = self.module('param').param_status()
