@@ -63,7 +63,7 @@ class MapModule(mp_module.MPModule):
               ('setpos_accuracy', float, 50),
               ('font_size', float, 0.5) ])
         
-        service='MicrosoftHyb'
+        service='StatKartTopo2'
         if 'MAP_SERVICE' in os.environ:
             service = os.environ['MAP_SERVICE']
         import platform
