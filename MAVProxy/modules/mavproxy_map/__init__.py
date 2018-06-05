@@ -55,7 +55,7 @@ class MapModule(mp_module.MPModule):
               ('showclicktime',int, 2),
               ('showdirection', bool, False)])
         
-        service='MicrosoftHyb'
+        service='StatKartTopo2'
         if 'MAP_SERVICE' in os.environ:
             service = os.environ['MAP_SERVICE']
         import platform
