@@ -3,7 +3,8 @@
 
   uses lib/console.py for display
   TODO:
-add orange warning for HDOP/sats '''
+add orange warning for HDOP/sats 
+example :       self.say("Flight battery ..." , priority='notification')
 
 """
 
@@ -566,8 +567,10 @@ class ConsoleModule(mp_module.MPModule):
                 highest = max(v, highest)
             if highest >= 1.0:
                 fg = 'red'
+                self.say("Warning: EKF variance >1")
             elif highest >= 0.5:
                 fg = 'orange'
+                self.say("Warning: EKF variance >0.5")
             else:
                 fg = 'green'
             self.console.set_status('EKF', 'EKF', fg=fg)
@@ -577,9 +580,11 @@ class ConsoleModule(mp_module.MPModule):
                 fg = 'green'
             else:
                 fg = 'red'
+                self.say("Warning: Vcc bad !")
             self.console.set_status('Vcc', 'Vcc %.2f' % (msg.Vcc * 0.001), fg=fg)
             if msg.flags & mavutil.mavlink.MAV_POWER_STATUS_CHANGED:
                 fg = 'red'
+                self.say("Warning: Power status changed !")
             else:
                 fg = 'green'
             status = 'PWR:'
@@ -625,7 +630,8 @@ class ConsoleModule(mp_module.MPModule):
                 fg = 'dark green'
                 if m.linkerror:
                     linkline += "down"
-                    fg = 'red'
+                    fg = 'red' 
+                    self.say("Warning: Link Down")
                 else:
                     packets_rcvd_percentage = 100
                     if (m.mav_count+m.mav_loss) != 0: #avoid divide-by-zero
@@ -713,6 +719,7 @@ class ConsoleModule(mp_module.MPModule):
                 fg = 'red'
             elif msg.clipping_0 >= 10:
                 fg = 'darkorange'
+                self.say("Warning: Clipping")
             else:
                 fg = "black"
             self.console.set_status('Clip0', 'Clip0 %s' % msg.clipping_0, fg=fg)
@@ -721,6 +728,7 @@ class ConsoleModule(mp_module.MPModule):
                 fg = 'red'
             elif msg.clipping_1 >= 10:
                 fg = 'darkorange'
+                self.say("Warning: Clipping")
             else:
                 fg = "black"
             self.console.set_status('Clip1', 'Clip1 %s' % msg.clipping_1, fg=fg)
@@ -729,30 +737,37 @@ class ConsoleModule(mp_module.MPModule):
                 fg = 'red'
             elif msg.clipping_2 >= 10:
                 fg = 'darkorange'
+                self.say("Warning: Clipping")
             else:
                 fg = "black"
             self.console.set_status('Clip2', 'Clip2 %s' % msg.clipping_2, fg=fg)
 
             if msg.vibration_x >= 60:
                 fg = 'red'
+                self.say("Warning: Severe Vibrations")
             elif msg.vibration_x >= 30:
                 fg = 'darkorange'
+                self.say("Warning: Vibrations")
             else:
                 fg = "black"
             self.console.set_status('VibX', 'VibX %.2f' % msg.vibration_x, fg=fg)
 
             if msg.vibration_y >= 60:
                 fg = 'red'
+                self.say("Warning: Severe Vibrations")
             elif msg.vibration_y >= 30:
                 fg = 'darkorange'
+                self.say("Warning: Vibrations")
             else:
                 fg = "black"
             self.console.set_status('VibY', 'VibY %.2f' % msg.vibration_y, fg=fg)
 
             if msg.vibration_z >= 60:
                 fg = 'red'
+                self.say("Warning: Severe Vibrations")
             elif msg.vibration_z >= 30:
                 fg = 'darkorange'
+                self.say("Warning: Vibrations")
             else:
                 fg = "black"
             self.console.set_status('VibZ', 'VibZ %.2f' % msg.vibration_z, fg=fg)
