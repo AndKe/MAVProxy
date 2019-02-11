@@ -527,7 +527,7 @@ class ConsoleModule(mp_module.MPModule):
             self.console.set_status('EKF', 'EKF', fg=fg)
 
         elif type == 'HWSTATUS':
-            if msg.Vcc >= 4600 and msg.Vcc <= 5300:
+            if msg.Vcc < 4900 or msg.Vcc > 5550:
                 fg = 'green'
             else:
                 fg = 'red'
