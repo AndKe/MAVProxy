@@ -580,7 +580,7 @@ class ConsoleModule(mp_module.MPModule):
                 fg = 'green'
             else:
                 fg = 'red'
-                self.say("Warning: Vcc bad !")
+                self.say("Warning: Vcc %s volt" % (msg.Vcc * 0.001))
             self.console.set_status('Vcc', 'Vcc %.2f' % (msg.Vcc * 0.001), fg=fg)
             if msg.flags & mavutil.mavlink.MAV_POWER_STATUS_CHANGED:
                 fg = 'red'
