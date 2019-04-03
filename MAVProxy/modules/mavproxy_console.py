@@ -66,7 +66,7 @@ class ConsoleModule(mp_module.MPModule):
         mpstate.console.set_status('AGL', 'AGL ---/---', row=2)
         mpstate.console.set_status('AirSpeed', 'AirSpeed --', row=2)
         mpstate.console.set_status('GPSSpeed', 'GPSSpeed --', row=2)
-        mpstate.console.set_status('Thr', 'Thr ---', row=2)
+        mpstate.console.set_status('Thr', 'Thr ---', row=1)
         mpstate.console.set_status('Roll', 'Roll ---', row=2)
         mpstate.console.set_status('Pitch', 'Pitch ---', row=2)
         mpstate.console.set_status('Wind', 'Wind ---/---', row=2)
