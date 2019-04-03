@@ -518,10 +518,10 @@ class ConsoleModule(mp_module.MPModule):
                 highest = max(v, highest)
             if highest >= 1.0:
                 fg = 'red'
-                self.say("Warning: EKF variance >1")
+                #self.say("Warning: EKF variance >1")
             elif highest >= 0.5:
                 fg = 'orange'
-                self.say("Warning: EKF variance >0.5")
+                #self.say("Warning: EKF variance >0.5")
             else:
                 fg = 'green'
             self.console.set_status('EKF', 'EKF', fg=fg)
@@ -678,7 +678,7 @@ class ConsoleModule(mp_module.MPModule):
                 fg = 'red'
             elif msg.clipping_0 >= 10:
                 fg = 'darkorange'
-                self.say("Warning: Clipping")
+                #self.say("Warning: Clipping")
             else:
                 fg = "black"
             self.console.set_status('Clip0', 'Clip0 %s' % msg.clipping_0, fg=fg)
@@ -687,7 +687,7 @@ class ConsoleModule(mp_module.MPModule):
                 fg = 'red'
             elif msg.clipping_1 >= 10:
                 fg = 'darkorange'
-                self.say("Warning: Clipping")
+                #self.say("Warning: Clipping")
             else:
                 fg = "black"
             self.console.set_status('Clip1', 'Clip1 %s' % msg.clipping_1, fg=fg)
@@ -696,7 +696,7 @@ class ConsoleModule(mp_module.MPModule):
                 fg = 'red'
             elif msg.clipping_2 >= 10:
                 fg = 'darkorange'
-                self.say("Warning: Clipping")
+                #self.say("Warning: Clipping")
             else:
                 fg = "black"
             self.console.set_status('Clip2', 'Clip2 %s' % msg.clipping_2, fg=fg)
