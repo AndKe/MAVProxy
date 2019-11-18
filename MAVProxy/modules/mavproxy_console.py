@@ -344,12 +344,12 @@ class ConsoleModule(mp_module.MPModule):
         if type in ['RADIO', 'RADIO_STATUS']:
             if msg.rssi < msg.noise+10 or msg.remrssi < msg.remnoise+10:
                 fg = 'red'
-                if self.last_link_state <> 1:
+                if self.last_link_state != 1:
                     self.say("telemetry link warning")
                     self.last_link_state = 1
             else:
                 fg = 'black'
-                if self.last_link_state <> 0:
+                if self.last_link_state != 0:
                     self.say("telemetry link normal")
                     self.last_link_state = 0
             self.console.set_status('Radio', 'Radio %u/%u %u/%u' % (msg.rssi, msg.noise, msg.remrssi, msg.remnoise), fg=fg)
