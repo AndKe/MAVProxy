@@ -703,12 +703,12 @@ class ConsoleModule(mp_module.MPModule):
                 alt_error = "NaN"
             else:
                 alt_error = "%s%s" % (self.height_string(msg.alt_error), alt_error_sign)
-                    if msg.alt_error > 2 or msg.alt_error < -2 :
-                        fg = "red"
-                    elif msg.alt_error > 1 or msg.alt_error < -1:
-                        fg = "darkorange"
-                    else:
-                        fg = "black"
+                if msg.alt_error > 2 or msg.alt_error < -2 :
+                    fg = "red"
+                elif msg.alt_error > 1 or msg.alt_error < -1:
+                    fg = "darkorange"
+                else:
+                    fg = "black"
 
             self.console.set_status('AltError', 'AltError %s' % alt_error, fg=fg)
             self.console.set_status('AspdError', 'AspdError %s%s' % (self.speed_string(msg.aspd_error*0.01), aspd_error_sign))
