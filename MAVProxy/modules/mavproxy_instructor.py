@@ -37,12 +37,20 @@ class InstructorModule(mp_module.MPModule):
         # if mp_instructor.InstructorFrame.out_pipe.poll():
 
         if self.instructor.pipe_to_gui.poll():
-            print("I am here")
             obj = self.instructor.pipe_to_gui.recv()
+            if obj[0] == "dis_gnss":
+                print(str(obj[1]))
+                self.param_set('SIM_GPS_DISABLE', int(obj[1]))
 
-            self.instructor.set_check("Odroid Booted", 1)
+
+            elif obj[0] == "setmode":
+                self.master.set_mode("RTL")
+
+            #elif obj[0] == "volt_drop":
+
+
+            # self.instructor.set_check("Odroid Booted", 1)
             print(obj)
-            print(obj.name + ", " + str(obj.state))
 
         '''beforeEngineList - Flight mode MANUAL'''
         if self.mpstate.status.flightmode == "MANUAL":

@@ -10,7 +10,7 @@ from MAVProxy.modules.lib import multiproc
 from MAVProxy.modules.lib.wx_loader import wx
 
 
-class CheckInstructorItem:
+class CheckboxItemState:
     """Checklist item used for information transfer
     between threads/processes/pipes"""
     def __init__(self, name, state):
@@ -55,7 +55,7 @@ class InstructorUI:
     def set_check(self, name, state):
         """set a status value"""
         if self.child.is_alive():
-            self.pipe_to_gui.send(CheckInstructorItem(name, state))
+            self.pipe_to_gui.send(CheckboxItemState(name, state))
 
 
 class InstructorFrame(wx.Frame):
@@ -153,17 +153,25 @@ class InstructorFrame(wx.Frame):
 
         'Common failures'
 
-        self.GNSS_Loss_Button = wx.Button(PanelCommon, wx.ID_ANY, "GNSS Loss")
+        self.Dis_GNSS_Fix_Checkbox = wx.CheckBox(PanelCommon, wx.ID_ANY, "Disable GNSS FIX")
+        boxCommon.Add(self.Dis_GNSS_Fix_Checkbox)
 
 
-        self.VoltageSlider = wx.Slider(PanelCommon, wx.ID_ANY, 200, 150, 500, wx.DefaultPosition, (250, -1),
-                                        wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
+        self.VoltageSlider = wx.Slider(PanelCommon, wx.ID_ANY, 200, 10, 500, wx.DefaultPosition, (250, -1),
+                wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
         boxCommon.Add(self.VoltageSlider)
 
-        disCheckbox = wx.CheckBox(PanelCommon, wx.ID_ANY, "GNSS FIX")
-        disCheckbox.Enable(False)
-        boxCommon.Add(disCheckbox)
-        boxCommon.Add(self.GNSS_Loss_Button)
+        self.Voltage_Drop_Checkbox = wx.CheckBox(PanelCommon, wx.ID_ANY, "Voltage dropping rate mv/s")
+        # disCheckbox.Enable(False)
+        boxCommon.Add(self.Voltage_Drop_Checkbox)
+
+        self.FailsafeButton = wx.Button(PanelCommon, wx.ID_ANY, "Trigger FailSafe")
+        boxCommon.Add(self.FailsafeButton)
+
+
+
+
+
 
         '''before assembly checklist'''
         for key in self.beforeAssemblyList:
@@ -202,15 +210,34 @@ class InstructorFrame(wx.Frame):
 
     # Create the actions for the buttons
     def createActions(self):
-        self.Bind(wx.EVT_BUTTON, self.on_gnss_Button, self.GNSS_Loss_Button)
-        self.Bind(wx.EVT_BUTTON, self.on_Button, self.AssemblyButton)
-        self.Bind(wx.EVT_BUTTON, self.on_gnss_Button, self.EngineButton)
+        self.Bind(wx.EVT_CHECKBOX, self.dis_gnss, self.Dis_GNSS_Fix_Checkbox)
+        #self.Bind(wx.EVT_CHECKBOX, self.sendevent("Voltage", 20), self.Voltage_Drop_Checkbox)   #  WHY  trigged once?
+        self.Bind(wx.EVT_CHECKBOX, self.volt_drop, self.Voltage_Drop_Checkbox)
+        self.Bind(wx.EVT_SLIDER, self.volt_drop_rate, self.VoltageSlider)
+        self.Bind(wx.EVT_BUTTON, self.setmode, self.FailsafeButton)
+        #self.Bind(wx.EVT_BUTTON, self.on_gnss_Button, self.EngineButton)
 
-    def on_gnss_Button(self, event):
-        self.gui_pipe.send("test123")
+    def dis_gnss(self, event):
+        self.gui_pipe.send(["dis_gnss", self.Dis_GNSS_Fix_Checkbox.Value])
+
+    def volt_drop(self, event):
+        self.gui_pipe.send(["volt_drop", self.Voltage_Drop_Checkbox.Value])
+
+    def volt_drop_rate(self, event):
+        self.gui_pipe.send(["voltage_drop_rate", self.VoltageSlider.Value])
+
+    def setmode(self, event):
+        self.gui_pipe.send(["setmode", 10])
+    def on_gnss_Button_ok(self, event):
+        self.gui_pipe.send("ok")
+
+
+
+    def sendevent(self, event, text, value=0):
+        self.gui_pipe.send([text, value])
 
     #do a final check of the current panel and move to the next
-    def on_Button( self, event ):
+    def on_Button( self, event):
         win = (event.GetEventObject()).GetParent()
         for widget in win.GetChildren():
             if type(widget) is wx.CheckBox and widget.IsChecked() == 0:
@@ -235,7 +262,7 @@ class InstructorFrame(wx.Frame):
         dlg.ShowModal()
         dlg.Destroy()
 
-    # Receive messages from MAVProxy and process them
+    # Receive messages from MAVProxy module and process them
     def on_timer(self, event, notebook):
         state = self.state
         win = notebook.GetPage(notebook.GetSelection())
@@ -245,7 +272,7 @@ class InstructorFrame(wx.Frame):
             return
         while state.gui_pipe.poll():
             obj = state.gui_pipe.recv()
-            if isinstance(obj, CheckInstructorItem):
+            if isinstance(obj, CheckboxItemState):
                 # go through each item in the current tab and (un)check as needed
                 # print(obj.name + ", " + str(obj.state))
                 for widget in win.GetChildren():
