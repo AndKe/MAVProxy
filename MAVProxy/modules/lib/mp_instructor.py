@@ -22,7 +22,7 @@ class InstructorUI:
     """
     a checklist UI for MAVProxy
     """
-    def __init__(self, title='MAVProxy: Instructor'):
+    def __init__(self, title='Instructor Station'):
         self.title = title
         self.menu_callback = None
         self.pipe_to_gui, self.gui_pipe = multiproc.Pipe()
@@ -66,7 +66,7 @@ class InstructorFrame(wx.Frame):
         self.gui_pipe = gui_pipe
         wx.Frame.__init__(self, None, title=title, size=(500, 650), style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
 
-        self.createLists()
+
         self.panel = wx.Panel(self)
         self.nb = wx.Choicebook(self.panel, wx.ID_ANY)
 
@@ -91,40 +91,7 @@ class InstructorFrame(wx.Frame):
         self.Show(True)
         self.pending = []
 
-    # Create the checklist items
-    def createLists(self):
-        """Generate the checklists. Note that:
-        0,1 = off/on for auto-ticked items
-        2,3 = off/on for manually ticked items"""
 
-        self.beforeAssemblyList = {
-        'Confirm batteries charged':2,
-        'No physical damage to airframe':2,
-        'All electronics present and connected':2,
-        'Bottle loaded':2,
-        'Ground station operational':2
-        }
-
-        self.beforeEngineList = {
-        'Avionics Power ON':2,
-        'Pixhawk Booted':0,
-        'Odroid Booted':2,
-        'Cameras calibrated and capturing':2,
-        'GPS lock':0,
-        'Airspeed check':2,
-        'Barometer check':2,
-        'Compass check':2,
-        'Flight mode MANUAL':0,
-        'Avionics Power':0,
-        'Servo Power':0,
-        'IMU Check':0,
-        'Aircraft Params Loaded':2,
-        'Waypoints Loaded':0,
-        'Servo and clevis check':2,
-        'Geofence loaded':2,
-        'Ignition circuit and battery check':2,
-        'Check stabilisation in FBWA mode':2
-        }
 
     # create controls on form - labels, buttons, etc
     def createWidgets(self):
@@ -137,17 +104,12 @@ class InstructorFrame(wx.Frame):
         PanelCommon.SetSizer(boxCommon)
         PanelCommon.Layout()
 
-        PanelAssembly = wx.Panel(self.nb)
-        boxAssembly = wx.BoxSizer(wx.VERTICAL)
-        PanelAssembly.SetAutoLayout(True)
-        PanelAssembly.SetSizer(boxAssembly)
-        PanelAssembly.Layout()
 
-        PanelEngine = wx.Panel(self.nb)
-        boxEngine = wx.BoxSizer(wx.VERTICAL)
-        PanelEngine.SetAutoLayout(True)
-        PanelEngine.SetSizer(boxEngine)
-        PanelEngine.Layout()
+        PanelPlane = wx.Panel(self.nb)
+        boxPlane = wx.BoxSizer(wx.VERTICAL)
+        PanelPlane.SetAutoLayout(True)
+        PanelPlane.SetSizer(boxPlane)
+        PanelPlane.Layout()
 
         # add the data to the individual tabs
 
@@ -157,79 +119,120 @@ class InstructorFrame(wx.Frame):
         boxCommon.Add(self.Dis_GNSS_Fix_Checkbox)
 
 
-        self.VoltageSlider = wx.Slider(PanelCommon, wx.ID_ANY, 200, 10, 500, wx.DefaultPosition, (250, -1),
-                wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
+        boxCommon.Add(wx.StaticLine(PanelCommon, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 10)
+        boxCommon.Add(wx.StaticText(PanelCommon, wx.ID_ANY, 'Voltage drop rate mv/s:', wx.DefaultPosition, wx.DefaultSize, style=wx.ALIGN_RIGHT))
+
+        self.VoltageSlider = wx.Slider(PanelCommon, wx.ID_ANY, 100, 10, 200, wx.DefaultPosition, (250, -1),
+                                       wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
         boxCommon.Add(self.VoltageSlider)
 
-        self.Voltage_Drop_Checkbox = wx.CheckBox(PanelCommon, wx.ID_ANY, "Voltage dropping rate mv/s")
-        # disCheckbox.Enable(False)
+        self.Voltage_Drop_Checkbox = wx.CheckBox(PanelCommon, wx.ID_ANY, "Voltage dropping")
         boxCommon.Add(self.Voltage_Drop_Checkbox)
+
+        boxCommon.Add(wx.StaticLine(PanelCommon, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 10)
 
         self.FailsafeButton = wx.Button(PanelCommon, wx.ID_ANY, "Trigger FailSafe")
         boxCommon.Add(self.FailsafeButton)
 
+        boxCommon.Add(wx.StaticLine(PanelCommon, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 10)
+
+        self.GCS_Comm_Loss_Checkbox = wx.CheckBox(PanelCommon, wx.ID_ANY, "GCS Comm loss")
+        # disCheckbox.Enable(False)
+        boxCommon.Add(self.GCS_Comm_Loss_Checkbox)
+
+        boxCommon.Add(wx.StaticLine(PanelCommon, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 10)
+        boxCommon.Add(wx.StaticText(PanelCommon, wx.ID_ANY, 'Wind Direction:', wx.DefaultPosition, wx.DefaultSize,style=wx.ALIGN_RIGHT))
+
+        self.Wind_Dir_Slider = wx.Slider(PanelCommon, wx.ID_ANY, 0, 0, 359, wx.DefaultPosition, (250, -1),
+                                         wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
+        boxCommon.Add(self.Wind_Dir_Slider)
+
+        boxCommon.Add(wx.StaticText(PanelCommon, wx.ID_ANY, 'Wind Velocity (m/s):', wx.DefaultPosition, wx.DefaultSize,style=wx.ALIGN_RIGHT))
+        self.Wind_Vel_Slider = wx.Slider(PanelCommon, wx.ID_ANY, 0, 0, 50, wx.DefaultPosition, (250, -1),
+                                       wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
+        boxCommon.Add(self.Wind_Vel_Slider)
+
+        boxCommon.Add(wx.StaticText(PanelCommon, wx.ID_ANY, 'Turbulence:', wx.DefaultPosition, wx.DefaultSize,
+                                    style=wx.ALIGN_RIGHT))
+        self.Wind_Turb_Slider = wx.Slider(PanelCommon, wx.ID_ANY, 0, 0, 10, wx.DefaultPosition, (250, -1),
+                                         wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
+        boxCommon.Add(self.Wind_Turb_Slider)
 
 
+        'Plane specific failures'
 
+        self.Pitot_Fail_Low_Checkbox = wx.CheckBox(PanelPlane, wx.ID_ANY, "Pitot stuck at no speed")
+        boxPlane.Add(self.Pitot_Fail_Low_Checkbox)
 
+        self.Pitot_Fail_High_Checkbox = wx.CheckBox(PanelPlane, wx.ID_ANY, "Pitot stuck at high speed")
+        boxPlane.Add(self.Pitot_Fail_High_Checkbox)
 
-        '''before assembly checklist'''
-        for key in self.beforeAssemblyList:
-            if self.beforeAssemblyList[key] == 0:
-                disCheckBox = wx.CheckBox(PanelAssembly, wx.ID_ANY, key)
-                disCheckBox.Enable(False)
-                boxAssembly.Add(disCheckBox)
-            if self.beforeAssemblyList[key] == 2:
-                boxAssembly.Add(wx.CheckBox(PanelAssembly, wx.ID_ANY, key))
+        self.Arspd_Offset_Slider = wx.Slider(PanelPlane, wx.ID_ANY, 2013, 1500, 2500, wx.DefaultPosition, (250, -1),
+                                       wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
+        boxPlane.Add(self.Arspd_Offset_Slider)
 
-        self.AssemblyButton = wx.Button(PanelAssembly, wx.ID_ANY, "Close final hatches")
-        boxAssembly.Add(self.AssemblyButton)
-
-        self.AssemblySlider = wx.Slider(PanelAssembly, wx.ID_ANY, 200, 150, 500, wx.DefaultPosition, (250,-1),wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
-        boxAssembly.Add(self.AssemblySlider)
-
-        '''before Engine Start checklist'''
-        for key in self.beforeEngineList:
-            if self.beforeEngineList[key] == 0:
-                disCheckBox = wx.CheckBox(PanelEngine, wx.ID_ANY, key)
-                disCheckBox.Enable(False)
-                boxEngine.Add(disCheckBox)
-            if self.beforeEngineList[key] == 2:
-                boxEngine.Add(wx.CheckBox(PanelEngine, wx.ID_ANY, key))
-
-        self.EngineButton = wx.Button(PanelEngine, wx.ID_ANY, "Ready for Engine start")
-        boxEngine.Add(self.EngineButton)
-
-        self.ShutdownButton = wx.Button(PanelEngine, wx.ID_ANY, "Ready for Shutdown")
-        boxEngine.Add(self.ShutdownButton)
+        boxPlane.Add(wx.StaticLine(PanelPlane, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 10)
 
         # and add in the tabs
         self.nb.AddPage(PanelCommon, "Common (Copter/Plane) Failures")
-        self.nb.AddPage(PanelAssembly, "1. During Assembly")
-        self.nb.AddPage(PanelEngine, "2. Before Engine Start")
+        self.nb.AddPage(PanelPlane, "Plane specific Failures")
 
     # Create the actions for the buttons
     def createActions(self):
+        # Common tab:
         self.Bind(wx.EVT_CHECKBOX, self.dis_gnss, self.Dis_GNSS_Fix_Checkbox)
         #self.Bind(wx.EVT_CHECKBOX, self.sendevent("Voltage", 20), self.Voltage_Drop_Checkbox)   #  WHY  trigged once?
         self.Bind(wx.EVT_CHECKBOX, self.volt_drop, self.Voltage_Drop_Checkbox)
-        self.Bind(wx.EVT_SLIDER, self.volt_drop_rate, self.VoltageSlider)
+        self.Bind(wx.EVT_CHECKBOX, self.gcs_comm_loss, self.GCS_Comm_Loss_Checkbox)
+        self.Bind(wx.EVT_SCROLL_CHANGED, self.volt_drop_rate, self.VoltageSlider)
         self.Bind(wx.EVT_BUTTON, self.setmode, self.FailsafeButton)
-        #self.Bind(wx.EVT_BUTTON, self.on_gnss_Button, self.EngineButton)
+        self.Bind(wx.EVT_SCROLL_CHANGED, self.wind_dir, self.Wind_Dir_Slider)
+        self.Bind(wx.EVT_SCROLL_CHANGED, self.wind_vel, self.Wind_Vel_Slider)
+        self.Bind(wx.EVT_SCROLL_CHANGED, self.wind_turbulence, self.Wind_Turb_Slider)
+        # Plane tab:
+        self.Bind(wx.EVT_CHECKBOX, self.pitot_fail_low, self.Pitot_Fail_Low_Checkbox)
+        self.Bind(wx.EVT_CHECKBOX, self.pitot_fail_high, self.Pitot_Fail_High_Checkbox)
+        self.Bind(wx.EVT_SCROLL_CHANGED, self.arspd_offset, self.Arspd_Offset_Slider)
 
+    # Common actions
     def dis_gnss(self, event):
         self.gui_pipe.send(["dis_gnss", self.Dis_GNSS_Fix_Checkbox.Value])
+
+    def volt_drop_rate(self, event):
+        self.gui_pipe.send(["volt_drop_rate", self.VoltageSlider.Value / 1000])
 
     def volt_drop(self, event):
         self.gui_pipe.send(["volt_drop", self.Voltage_Drop_Checkbox.Value])
 
-    def volt_drop_rate(self, event):
-        self.gui_pipe.send(["voltage_drop_rate", self.VoltageSlider.Value])
+    def gcs_comm_loss(self, event):
+        self.gui_pipe.send(["gcs_comm_loss", self.GCS_Comm_Loss_Checkbox.Value])
 
     def setmode(self, event):
         self.gui_pipe.send(["setmode", 10])
     def on_gnss_Button_ok(self, event):
         self.gui_pipe.send("ok")
+
+    def wind_dir(self, event):
+        self.gui_pipe.send(["wind_dir", self.Wind_Dir_Slider.Value])
+
+    def wind_vel(self, event):
+        self.gui_pipe.send(["wind_vel", self.Wind_Vel_Slider.Value])
+
+
+    def wind_turbulence(self, event):
+        self.gui_pipe.send(["wind_turbulence", self.Wind_Turb_Slider.Value])
+
+    # Plane actions
+
+    def pitot_fail_low(self, event):
+        self.gui_pipe.send(["pitot_fail_low", self.Pitot_Fail_Low_Checkbox.Value])
+
+    def pitot_fail_high(self, event):
+        self.gui_pipe.send(["pitot_fail_high", self.Pitot_Fail_High_Checkbox.Value])
+
+    def arspd_offset(self, event):
+        self.gui_pipe.send(["arspd_offset", self.Arspd_Offset_Slider.Value])
+
 
 
 
@@ -248,19 +251,6 @@ class InstructorFrame(wx.Frame):
         # all checked, go to next panel.
         win.GetParent().AdvanceSelection()
 
-    # Special implementation of the above function, but for the last tab
-    def on_ButtonLast( self, event ):
-        win = (event.GetEventObject()).GetParent()
-        for widget in win.GetChildren():
-            if type(widget) is wx.CheckBox and widget.IsChecked() == 0:
-                dlg = wx.MessageDialog(win, "Not all items checked", "Error", wx.OK | wx.ICON_WARNING)
-                dlg.ShowModal()
-                dlg.Destroy()
-                return
-        # all checked, we're done.
-        dlg = wx.MessageDialog(win, "Checklist Complete", "Done", wx.OK | wx.ICON_INFORMATION)
-        dlg.ShowModal()
-        dlg.Destroy()
 
     # Receive messages from MAVProxy module and process them
     def on_timer(self, event, notebook):
