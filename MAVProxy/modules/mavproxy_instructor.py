@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
   MAVProxy instructor station module
-  Created by André Kjellstrup @ NORCE
+  André Kjellstrup @ NORCE
 """
 
 import math
@@ -113,7 +113,28 @@ class InstructorModule(mp_module.MPModule):
                 self.param_set('SIM_ARSPD_OFS', obj[1])
 
 
+            elif obj[0] == "plane_thrust_loss":
+                self.param_set('SERVO3_MAX', 2000 - obj[1])
 
+            elif obj[0] == "plane_thrust_loss_curr":
+                self.param_set('SERVO3_MAX', 2000 - obj[1])
+                # simulate increased current by 0...-2 offset
+                self.param_set('BATT_AMP_OFFSET', (-obj[1]/500))
+
+
+           # Copter Actions
+
+            elif obj[0] == "copter_thrust_loss":
+                self.param_set('MOT_PWM_MAX', 2000 - obj[1])
+                # simulate increased current
+                self.param_set('BATT_AMP_PERVLT', 17 + (obj[1]/40))
+
+            elif obj[0] == "copter_reset":
+                print("MOT_PWM_MAX 2000")
+                self.param_set('MOT_PWM_MAX', 2000)
+                print("BATT_AMP_PERVLT 17")
+                self.param_set('BATT_AMP_PERVLT', 17)
+                print('Done')
 
         '''beforeEngineList - Flight mode MANUAL'''
         if self.mpstate.status.flightmode == "MANUAL":

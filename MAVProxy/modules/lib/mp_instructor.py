@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 """
-  MAVProxy instructor station, UI implemented in a child process
-  Created by André Kjellstrup @ NORCE
+  MAVProxy instructor station, UI runs in a child process
+  André Kjellstrup @ NORCE
 """
 
 from MAVProxy.modules.lib import mp_util
@@ -11,8 +11,6 @@ from MAVProxy.modules.lib.wx_loader import wx
 
 
 class CheckboxItemState:
-    """Checklist item used for information transfer
-    between threads/processes/pipes"""
     def __init__(self, name, state):
         self.name = name
         self.state = state
@@ -20,7 +18,7 @@ class CheckboxItemState:
 
 class InstructorUI:
     """
-    a checklist UI for MAVProxy
+    Instructor UI for MAVProxy
     """
     def __init__(self, title='Instructor Station'):
         self.title = title
@@ -79,6 +77,7 @@ class InstructorFrame(wx.Frame):
         # add in the pipe from MAVProxy
         self.timer = wx.Timer(self)
         # self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
+        # self.Bind(wx.EVT_TIMER, self.on_timer, self.timer)
         self.Bind(wx.EVT_TIMER, lambda evt, notebook=self.nb: self.on_timer(evt, notebook), self.timer)
         self.timer.Start(100)
 
@@ -111,13 +110,19 @@ class InstructorFrame(wx.Frame):
         PanelPlane.SetSizer(boxPlane)
         PanelPlane.Layout()
 
+        PanelCopter = wx.Panel(self.nb)
+        boxCopter = wx.BoxSizer(wx.VERTICAL)
+        PanelCopter.SetAutoLayout(True)
+        PanelCopter.SetSizer(boxCopter)
+        PanelCopter.Layout()
+
+
         # add the data to the individual tabs
 
         'Common failures'
 
         self.Dis_GNSS_Fix_Checkbox = wx.CheckBox(PanelCommon, wx.ID_ANY, "Disable GNSS FIX")
         boxCommon.Add(self.Dis_GNSS_Fix_Checkbox)
-
 
         boxCommon.Add(wx.StaticLine(PanelCommon, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 10)
         boxCommon.Add(wx.StaticText(PanelCommon, wx.ID_ANY, 'Voltage drop rate mv/s:', wx.DefaultPosition, wx.DefaultSize, style=wx.ALIGN_RIGHT))
@@ -173,9 +178,39 @@ class InstructorFrame(wx.Frame):
 
         boxPlane.Add(wx.StaticLine(PanelPlane, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 10)
 
+        boxPlane.Add(wx.StaticText(PanelPlane, wx.ID_ANY, 'Thrust reduction:', wx.DefaultPosition, wx.DefaultSize,
+                                    style=wx.ALIGN_RIGHT))
+        self.Plane_Thrust_Slider = wx.Slider(PanelPlane, wx.ID_ANY, 0, 0, 1000, wx.DefaultPosition, (250, -1),
+                                             wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
+        boxPlane.Add(self.Plane_Thrust_Slider)
+
+        boxPlane.Add(wx.StaticText(PanelPlane, wx.ID_ANY, 'Thrust reduction + current increase:', wx.DefaultPosition, wx.DefaultSize,
+                                   style=wx.ALIGN_RIGHT))
+
+        self.Plane_Thrust_Curr_Slider = wx.Slider(PanelPlane, wx.ID_ANY, 0, 0, 1000, wx.DefaultPosition, (250, -1),
+                                             wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
+        boxPlane.Add(self.Plane_Thrust_Curr_Slider)
+
+        'Copter specific failures'
+
+        boxCopter.Add(wx.StaticText(PanelCopter, wx.ID_ANY, 'Thrust reduction:', wx.DefaultPosition, wx.DefaultSize, style=wx.ALIGN_RIGHT))
+
+        self.Copter_Thrust_Slider = wx.Slider(PanelCopter, wx.ID_ANY, 0, 0, 400, wx.DefaultPosition, (250, -1),
+                                             wx.SL_AUTOTICKS | wx.SL_HORIZONTAL | wx.SL_LABELS)
+        boxCopter.Add(self.Copter_Thrust_Slider)
+
+        boxCopter.Add(wx.StaticLine(PanelCopter, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 10)
+
+        self.CopterResetButton = wx.Button(PanelCopter, wx.ID_ANY, "Reset Parameters")
+        boxCopter.Add(self.CopterResetButton)
+
         # and add in the tabs
         self.nb.AddPage(PanelCommon, "Common (Copter/Plane) Failures")
         self.nb.AddPage(PanelPlane, "Plane specific Failures")
+        self.nb.AddPage(PanelCopter, "Copter specific Failures")
+
+
+
 
     # Create the actions for the buttons
     def createActions(self):
@@ -193,6 +228,11 @@ class InstructorFrame(wx.Frame):
         self.Bind(wx.EVT_CHECKBOX, self.pitot_fail_low, self.Pitot_Fail_Low_Checkbox)
         self.Bind(wx.EVT_CHECKBOX, self.pitot_fail_high, self.Pitot_Fail_High_Checkbox)
         self.Bind(wx.EVT_SCROLL_CHANGED, self.arspd_offset, self.Arspd_Offset_Slider)
+        self.Bind(wx.EVT_SCROLL_CHANGED, self.plane_thrust_loss, self.Plane_Thrust_Slider)
+        self.Bind(wx.EVT_SCROLL_CHANGED, self.plane_thrust_loss_curr, self.Plane_Thrust_Curr_Slider)
+        # Copter tab:
+        self.Bind(wx.EVT_SCROLL_CHANGED, self.copter_thrust_loss, self.Copter_Thrust_Slider)
+        self.Bind(wx.EVT_BUTTON, self.copter_reset, self.CopterResetButton)
 
     # Common actions
     def dis_gnss(self, event):
@@ -233,11 +273,25 @@ class InstructorFrame(wx.Frame):
     def arspd_offset(self, event):
         self.gui_pipe.send(["arspd_offset", self.Arspd_Offset_Slider.Value])
 
+    def plane_thrust_loss(self, event):
+        self.gui_pipe.send(["plane_thrust_loss", self.Plane_Thrust_Slider.Value])
 
+    def plane_thrust_loss_curr(self, event):
+        self.gui_pipe.send(["plane_thrust_loss_curr", self.Plane_Thrust_Curr_Slider.Value])
 
+        # Copter actions
+
+    def copter_thrust_loss(self, event):
+        self.gui_pipe.send(["copter_thrust_loss", self.Copter_Thrust_Slider.Value])
+
+    def copter_reset (self, event):
+        self.gui_pipe.send(["copter_reset", 0])
 
     def sendevent(self, event, text, value=0):
         self.gui_pipe.send([text, value])
+
+
+
 
     #do a final check of the current panel and move to the next
     def on_Button( self, event):
@@ -278,5 +332,4 @@ if __name__ == "__main__":
 
     # example auto-tick in second tab page
     while instructor.is_alive():
-        instructor.set_check("Compass Calibrated", 1)
         time.sleep(0.5)
