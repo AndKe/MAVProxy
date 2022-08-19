@@ -210,7 +210,9 @@ class InstructorModule(mp_module.MPModule):
                 self.instructor.set_check("IMU Check", 1)
             else:
                 self.instructor.set_check("IMU Check", 0)
-
+    def unload(self):
+        '''unload module'''
+        self.instructor.close()
 
 def init(mpstate):
     """initialise module"""
