@@ -325,6 +325,7 @@ class ConsoleModule(mp_module.MPModule):
             return
         type = msg.get_type()
         sysid = msg.get_srcSystem()
+        compid = msg.get_srcComponent()
 
         if type in frozenset(['HEARTBEAT', 'HIGH_LATENCY2']):
             if type == 'HEARTBEAT':
@@ -342,6 +343,7 @@ class ConsoleModule(mp_module.MPModule):
             self.update_vehicle_menu()
 
         if type in ['RADIO', 'RADIO_STATUS']:
+            # handle RADIO msgs from all vehicles
             if msg.rssi < msg.noise+10 or msg.remrssi < msg.remnoise+10:
                 fg = 'red'
                 if self.last_link_state != 1:
@@ -435,7 +437,7 @@ class ConsoleModule(mp_module.MPModule):
             self.console.set_status('Alt', 'Alt %s' % self.height_string(rel_alt))
             self.console.set_status('AirSpeed', 'AirSpeed %s' % self.speed_string(msg.airspeed))
             self.console.set_status('GPSSpeed', 'GPSSpeed %s' % self.speed_string(msg.groundspeed))
-            self.console.set_status('Thr', 'Thr %u%%' % msg.throttle)
+            self.console.set_status('Thr', 'Thr %u' % msg.throttle)
             t = time.localtime(msg._timestamp)
             flying = False
             if self.mpstate.vehicle_type == 'copter':
@@ -630,7 +632,7 @@ class ConsoleModule(mp_module.MPModule):
                 fg = 'dark green'
                 if m.linkerror:
                     linkline += "down"
-                    fg = 'red' 
+                    fg = 'red'
                     self.say("Warning: Link Down")
                 else:
                     packets_rcvd_percentage = 100
@@ -712,7 +714,6 @@ class ConsoleModule(mp_module.MPModule):
 
             self.console.set_status('AltError', 'AltError %s' % alt_error, fg=fg)
             self.console.set_status('AspdError', 'AspdError %s%s' % (self.speed_string(msg.aspd_error*0.01), aspd_error_sign))
-            #self.console.set_status('AspdError', 'AspdError %.1f%s' % (msg.aspd_error*0.01, aspd_error_sign))
             self.console.set_status('XtrackError', 'XtrackError %d' % (msg.xtrack_error))
         elif type == 'VIBRATION':
             if msg.clipping_0 >= 20:
